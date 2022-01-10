@@ -30,7 +30,7 @@ from unmanic.libs.directoryinfo import UnmanicDirectoryInfo
 from unmanic.libs.unplugins.settings import PluginSettings
 
 # Configure plugin logger
-logger = logging.getLogger("Unmanic.Plugin.reject_files_larger_than_original")
+logger = logging.getLogger("Unmanic.Plugin.reject_files")
 
 
 class Settings(PluginSettings):
@@ -50,7 +50,7 @@ def file_marked_as_failed(path):
         directory_info = UnmanicDirectoryInfo(os.path.dirname(path))
 
         try:
-            previously_failed = directory_info.get('reject_files_larger_than_original', os.path.basename(path))
+            previously_failed = directory_info.get('reject_files', os.path.basename(path))
         except NoSectionError as e:
             previously_failed = ''
         except NoOptionError as e:
@@ -181,7 +181,7 @@ def on_postprocessor_file_movement(data):
             # The current file is larger than the original.
             # Mark it as failed
             directory_info = UnmanicDirectoryInfo(os.path.dirname(original_source_path))
-            directory_info.set('reject_files_larger_than_original', os.path.basename(original_source_path), 'Ignoring')
+            directory_info.set('reject_files', os.path.basename(original_source_path), 'Ignoring')
             directory_info.save()
             logger.debug("Ignore on next scan written for '{}'.".format(original_source_path))
             # Copy the original file to the cache file
