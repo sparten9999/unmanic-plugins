@@ -3,7 +3,7 @@
     "compatibility": [
         1
     ],
-    "description": "reject_files_larger_than_original_official",
+    "description": "reject_files_larger_than_original_official original",
     "icon": "https://raw.githubusercontent.com/Josh5/unmanic.plugin.reject_files_larger_than_original/master/icon.png",
     "id": "reject_files_larger_than_original_official",
     "name": "reject_files_larger_than_original_official",
