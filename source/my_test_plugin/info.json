@@ -1,0 +1,16 @@
+{
+    "id": "test_plugin",
+    "name": "Test plugin functions",
+    "author": "sparten9999",
+    "version": "0.0.1",
+    "description": "",
+    "icon": "",
+    "tags": "test",
+    "compatibility": [
+        1
+    ],
+    "priorities": {
+        "on_library_management_file_test": 99,
+        "on_worker_process": 1
+    }
+}
