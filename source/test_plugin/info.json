@@ -1,0 +1,15 @@
+{
+    "author": "sparten9999",
+    "compatibility": [
+        1
+    ],
+    "description": "if transcoded file is larger then original file, keep the original file",
+    "icon": "https://raw.githubusercontent.com/Josh5/unmanic.plugin.mover2/master/icon.png",
+    "id": "test_plugin",
+    "name": "test_plugin",
+    "priorities": {
+        "on_library_management_file_test": 0,"on_worker_process": 99
+    },
+    "tags": "dev",
+    "version": "0.0.1"
+}
