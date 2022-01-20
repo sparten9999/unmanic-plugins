@@ -2,29 +2,40 @@
 # -*- coding: utf-8 -*-
 
 # to do / notes
-#   work on
-#  raise exception doesnt stop other plugins in stack from running after
+#   
+#  raise exception doesnt stop other plugins in stack from running after? not actually a problem?
+#
+
+#   rename 'test_plugin' to final name
+#   add setting for date format
+#   add button to erase data.csv and the temp dict
+#   add setting to  mark as failed or succuss based on if it will keep new file
+#   would be nice to set a percent to reject,
+#       example I would rather keep the original file if the size reduction is  10% or lower
 #
 #
+#  add setting that if new file is bigger that it will fail and stop all further processing 
+#       or reuse original data and continue with the flow and mark as success (still add to blacklist so it wont be picked up again)
 #
-# a setting to  mark as failed or succuss based on if it will keep new file
-#
+
+
+#   ?what happens if file is remuxed or name change?
 
 
 import random  # for testing only
 
 
 
+
+# i dont know what i actually need here
 import logging
 import os
-import shutil
+#import shutil
 from configparser import NoSectionError, NoOptionError
-
-
-
-
 from unmanic.libs.directoryinfo import UnmanicDirectoryInfo
 from unmanic.libs.unplugins.settings import PluginSettings
+from marshmallow import Schema, fields, validate
+
 
 
 
@@ -57,6 +68,7 @@ test_plugin_dict = {}
 
 
 def getDate():
+   # logger.debug("getDate called")
 
     now = datetime.now()
     current_time = now.strftime("%H:%M:%S")
@@ -80,29 +92,7 @@ def getDate():
 
 
 def on_library_management_file_test(data):
-    """
-    Runner function - enables additional actions during the library management file tests.
-
-    The 'data' object argument includes:
-        path                            - String containing the full path to the file being tested.
-        issues                          - List of currently found issues for not processing the file.
-        add_file_to_pending_tasks       - Boolean, is the file currently marked to be added to the queue for processing.
-
-    :param data:
-    :return:
-    
-    """
-    headers = {"filename" : None, 
-            "original size" : None,
-            "added_on" : None,
-            "transcoded_size": None,
-            "transcoded_time" : None,
-            "path" : None          
-            }
-
-# name of csv file 
-    csvfilePath = "/config/.unmanic/userdata/test_plugin/data.csv"
-
+    #logger.debug("on_library_management_file_test")
 
     work_file = data.get('path')
     # Get the file extension
@@ -121,18 +111,19 @@ def on_library_management_file_test(data):
 
 
 
-
-    status = True
-
-
-
-
-
-
-
-
-
     status = csvReadFunction(file_path,file_size)
+#    status = True # for making it ignore the results of the if the item is in the blacklist
+
+    #only attempt to log stuff if it gets added to queue
+    if status == True:
+        global test_plugin_dict
+        test_plugin_dict[file_path] = getDate()
+
+        logger.debug("test point 1: ")
+        logger.debug(len(test_plugin_dict))
+    
+
+
 
     data['add_file_to_pending_tasks'] = status
 
@@ -144,29 +135,6 @@ def on_library_management_file_test(data):
 
 
 
-  #  temp_dict = {file_path : getDate() }
-  #  logger.debug(temp_dict)
-    global test_plugin_dict
-    test_plugin_dict[file_path] = getDate()
-
-
-    #logger.debug("test_plugin_dict = ")
-    #logger.debug(test_plugin_dict)
-    test_plugin_dict[file_path + " 2"] = getDate()
-    test_plugin_dict[file_path + " 3456"] = getDate()
-    test_plugin_dict[file_path + " 23422"] = getDate()
-    
-    
-
-    
-
-
-
-
-
-
-  
-
 
     return data
 
@@ -174,10 +142,14 @@ def on_library_management_file_test(data):
 
 
 
+
+
+
+
 def csvReadFunction(file_path,file_size):
-   # logger.debug("csvReadFunction")
+    logger.debug("csvReadFunction called")
     csvfilePath = "/config/.unmanic/userdata/test_plugin/data.csv"
-    status = False
+    status = "none"
     headers = {"filename" : None, 
             "original size" : None,
             "added_on" : None,
@@ -188,53 +160,60 @@ def csvReadFunction(file_path,file_size):
     #Check if file exists. if not create it
     if (os.path.exists(csvfilePath) == False): 
         with open(csvfilePath, 'w') as csvfile: 
-            # creating a csv writer object            
-                         
+            # creating a csv writer object                                     
             csvwriter = csv.DictWriter(csvfile, delimiter=',', fieldnames=headers)
-            # writing the fields 
+            # writing the header 
             csvwriter.writeheader()
             csvfile.close()
-            logger.debug("data.csv does not exist and has been created. doesnt need to check farther")
-
+            logger.debug("data.csv not found, file created.")
+            #since file doesnt exist yet there is no need to check it for a blacklist
             status = True
             return status
+    else:
+        logger.debug("data.csv found.")
 
-    logger.debug("checking")
 
-    a='file_23'     #String that you want to search
-#csvfilePath
-    with open(csvfilePath, 'r') as csvfile: 
-        x = csv.DictReader(csvfile)
 
-        for row in x:
-           # logger.debug(row) #displays all rows
-            path = row['path']
-            size = row['original size']
-            
-           # logger.debug(path)
+    logger.debug("checking blacklist for file")
 
-            if  path == file_path:
-                #logger.debug('existing path found = ' + path)
-               # logger.debug(type(file_size))
-               # logger.debug(type(size))
+ 
 
-                if size == str(file_size):
-                    #logger.debug('matching size found = ' + size)
-                   # logger.debug('match - ' + path)
-                    logger.debug('MATCH - FILE HAS BEEN BLACKLISTED ALREADY SKIP')
-                    status = False
+    reader = csv.DictReader(open(csvfilePath))
 
-                    break
-                else:
-                    logger.debug('FAIL - matching path - different size')
-                    status = True
+    for row in reader:
+       # logger.debug(row) #displays all rows
+        path = row['path']
+        size = row['original size']
+        
+        logger.debug("test point 5: ")
+        logger.debug(path)
 
+        if  path == file_path:
+            #logger.debug('existing path found = ' + path)
+            if size == str(file_size):
+                #logger.debug('matching size found = ' + size)
+                logger.debug('MATCH - FILE HAS BEEN BLACKLISTED ALREADY SKIP')
+                status = False
+
+                break
             else:
-                logger.debug('no match')
+                logger.debug('FAIL - matching path but different size')
                 status = True
+        else:
+            #logger.debug('non match continuing search')
+            status = True
 
-    logger.debug("finished")
-    csvfile.close()
+    if status == "none":
+        logger.debug('file empty')
+        status = True
+
+
+
+    #logger.debug('status = ')        
+    #logger.debug(status)
+           
+
+    logger.debug("csvreader finished")
 
 
     return status
@@ -244,7 +223,8 @@ def csvReadFunction(file_path,file_size):
 
 
 
-def csvWriteFunction(x):
+def csvWriteFunction(x):  #will be added inline later. i dont think i need a special function for this
+    #logger.debug("csvWriteFunction called")
     csvfilePath = "/config/.unmanic/userdata/test_plugin/data.csv"
     headers = {"filename" : None, 
             "original size" : None,
@@ -266,15 +246,7 @@ def csvWriteFunction(x):
 
 
 def on_worker_process(data):
-    logger.debug("on_worker_process started")
-
-
-    
-
-
-
-   # logger.debug('original_file_path = ' + original_file_path)
-
+    #logger.debug("on_worker_process started")
 
     # Get the original file stats
     original_file_path = data.get('original_file_path')
@@ -282,65 +254,77 @@ def on_worker_process(data):
     original_file_size = original_file_stats.st_size
     file_name = os.path.basename(original_file_path)
 
-
-
     # Current cache file stats
     file_in = data.get('file_in')
     working_file_stats = os.stat(os.path.join(file_in))
     working_file_size = working_file_stats.st_size
 
-
-    #logger.debug( working_file_stats)
-    #logger.debug( original_file_stats)
+    added_on = "error"
 
     if working_file_size > original_file_size:
         logger.debug("NEW FILE BIGGER DISCARD CHANGES")
-        # The current file is larger than the original. Reset the cache file to the file in
+
+        if original_file_path in test_plugin_dict:
+            logger.debug("dict key match found")
+            added_on = test_plugin_dict[original_file_path]
+
+            #DELETE THIS KEY FROM THE DICT \/ so it doesnt get bigger and bigger
+           # logger.debug(test_plugin_dict)
+            test_plugin_dict.pop(original_file_path)
+           # logger.debug(test_plugin_dict)
 
 
-        added_on = "error"
-        temp_dict = dict(test_plugin_dict)
-        for x in temp_dict:
-            logger.debug(x + " : " + temp_dict[x]) 
-            if x == original_file_path:
-                logger.debug("dict key match found")
-                added_on = test_plugin_dict[x]
-                row = {        "filename" : file_name, 
-                          "original size" : original_file_size,
-                               "added_on" : added_on,
-                         "transcoded_size": working_file_size,
-                        "transcoded_time" : getDate(),
-                                   "path" : original_file_path          
+
+        else:
+            logger.debug("error no key match found: this shouldnt happen?") 
+
+        row = {            "filename" : file_name, 
+                      "original size" : original_file_size,
+                           "added_on" : added_on,
+                     "transcoded_size": working_file_size,
+                    "transcoded_time" : getDate(),
+                               "path" : original_file_path          
                          }
-                #DELETE THIS KEY FROM THE DICT \/
-                test_plugin_dict.pop(x)
-
-                csvWriteFunction(row) #dont need this here jsut for testing
 
 
+        csvWriteFunction(row) #log file, size, and times
 
-                break
-
-
-
-            else:     
-                logger.debug("no key match found") 
-
-
-
-      
-
-
-        raise Exception ("FAIL because of something")                
+        raise Exception ("FAIL because of transcoded file is larger then orginal file")                
 
          
-    else:    
-        logger.debug("New file smaller - keeping changes")
+    else:    #if new file is smaller then original do this
+        if original_file_path in test_plugin_dict:
+            logger.debug("dict key match found")
+
+            #DELETE THIS KEY FROM THE DICT \/ so it doesnt get bigger and bigger
+
+            #logger.debug("test point 9: ")
+            #logger.debug(test_plugin_dict)
+            test_plugin_dict.pop(original_file_path)
+           # logger.debug(test_plugin_dict)
 
 
+
+        else:
+            logger.debug("error no key match found: this shouldnt happen?") 
+
+
+
+
+
+
+
+    #logger.debug("test point 2: ")
+    #logger.debug(len(test_plugin_dict))
 
 
     return data
+
+
+
+
+
+
 
 
 
