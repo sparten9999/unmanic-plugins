@@ -1,3 +1,18 @@
+"""
+    Written by:               sparten9999
+    Date:                     23 Jan 2022, (04:10 PM)
+ 
+    Copyright:
+        Copyright (C) 2022 sparten9999
+        This program is free software: you can redistribute it and/or modify it under the terms of the GNU General
+        Public License as published by the Free Software Foundation, version 3.
+        This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+        implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
+        for more details.
+        You should have received a copy of the GNU General Public License along with this program.
+        If not, see <https://www.gnu.org/licenses/>.
+"""
+
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
@@ -57,16 +72,7 @@
 #
 
 
-"""
-Copyright (C) <2022> <sparten9999>
 
-This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, version 3.
-
-This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>. 
-
-"""
 
 headers = {"filename" : None,         
         "original_size" : None,
@@ -313,7 +319,7 @@ def csvReadFunction(file_path,file_size):
     for row in reader:
        # logger.debug(row) #displays all rows
         path = row['path']
-        size = row['original size']
+        size = row['original_size']
         
       #  logger.debug("test point 5: ")
        # logger.debug(path)
