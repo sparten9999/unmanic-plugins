@@ -23,28 +23,61 @@
 #   ?what happens if file is remuxed or name change?
 #   so i think if you do data['add_file_to_pending_tasks'] = True it will force it to the queue and skip further tests
 
+# add some documentation like if you are using this plugin it has to be ran with no existing items in pending tasks or else 
+#       it wont make the csv right or have the start time
+#
+#
+#   by putting the add time in the library test its actually getting the job add time not the job start time
+#       would have have this plugin be before transocder in worker process to get time. then convert the current worker process to be a later one
+#
+#
+# it didnt seem to make header row for 1 person?
 
+#   have it check both path/filename AND size incase you upgrade a file later
+#
+#
+#
+# convert to the sizes to mb
+#
+#    headers = {"filename" : None, 
+#            "original_size" : None,
+#            "job_added_on" : None,
+#            "transcoded_size": None,
+#            "transcoded_time" : None,
+#            "path" : None,
+#            "sized_saved": None          
+#
+#               
+#               }
+#
 
+#            
+#
+#
+#
 
 
 """
-    Written by:               sparten9999
-    Date:                     23 Jan 2022, (04:10 PM)
- 
-    Copyright:
-        Copyright (C) 2021 Josh Sunnex
-        This program is free software: you can redistribute it and/or modify it under the terms of the GNU General
-        Public License as published by the Free Software Foundation, version 3.
-        This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
-        implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
-        for more details.
-        You should have received a copy of the GNU General Public License along with this program.
-        If not, see <https://www.gnu.org/licenses/>.
+Copyright (C) <2022> <sparten9999>
+
+This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, version 3.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>. 
+
 """
 
+headers = {"filename" : None,         
+        "original_size" : None,
+            "job_added_on" : None,
+            "transcoded_size": None,
+            "transcoded_time" : None,
+            "path" : None,
+           "sized_saved": None          
 
-
-
+               
+               }
 
 
 
@@ -134,6 +167,19 @@ class Settings(PluginSettings):
 
     }
 
+    
+def convert_bytes(bytes_number):
+    tags = [ "Byte", "Kilobyte", "Megabyte", "Gigabyte", "Terabyte" ]
+ 
+    i = 0
+    double_bytes = bytes_number
+ 
+    while (i < len(tags) and  bytes_number >= 1024):
+            double_bytes = bytes_number / 1024.0
+            i = i + 1
+            bytes_number = bytes_number / 1024
+ 
+    return str(round(double_bytes, 2)) + " " + tags[i]
 
 
 def getDate():
@@ -234,13 +280,13 @@ def csvReadFunction(file_path,file_size):
     #logger.debug("csvReadFunction called")
     csvfilePath = "/config/.unmanic/userdata/blacklist_files_larger_than_original/data.csv"
     status = "none"
-    headers = {"filename" : None, 
-            "original size" : None,
-            "added_on" : None,
-            "transcoded_size": None,
-            "transcoded_time" : None,
-            "path" : None          
-            }
+#    headers = {"filename" : None, 
+#            "original size" : None,
+#            "added_on" : None,
+#            "transcoded_size": None,
+#            "transcoded_time" : None,
+#            "path" : None          
+#            }
     #Check if file exists. if not create it
     if (os.path.exists(csvfilePath) == False): 
         with open(csvfilePath, 'w') as csvfile: 
@@ -310,13 +356,22 @@ def csvReadFunction(file_path,file_size):
 def csvWriteFunction(x):  #will be added inline later. i dont think i need a special function for this
     #logger.debug("csvWriteFunction called")
     csvfilePath = "/config/.unmanic/userdata/blacklist_files_larger_than_original/data.csv"
-    headers = {"filename" : None, 
-            "original size" : None,
-            "added_on" : None,
-            "transcoded_size": None,
-            "transcoded_time" : None,
-            "path" : None          
-            }
+#    headers = {"filename" : None, 
+#            "original size" : None,
+#            "added_on" : None,
+#            "transcoded_size": None,
+#            "transcoded_time" : None,
+#            "path" : None          
+#            }
+
+
+
+
+
+
+
+
+            
     with open(csvfilePath, 'a+') as csvfile: 
         # creating a csv writer object 
         csvwriter = csv.DictWriter(csvfile, fieldnames=headers) 
@@ -331,12 +386,14 @@ def csvWriteFunction(x):  #will be added inline later. i dont think i need a spe
 
 def on_worker_process(data):
     #logger.debug("on_worker_process started")
+    global blacklist_files_larger_than_original_dict
 
 
     settings = Settings()
     mark_as_setting = settings.get_setting('Mark task as failure or continue processing')
     #opt1 = fail out and stop processing
     #opt2 = reuse original file and continue 
+
 
 
 
@@ -357,8 +414,12 @@ def on_worker_process(data):
     if working_file_size > original_file_size:
         logger.debug("NEW FILE BIGGER DISCARD CHANGES")
 
+        logger.debug(original_file_path)
+        logger.debug(blacklist_files_larger_than_original_dict)
+
+
         if original_file_path in blacklist_files_larger_than_original_dict:
-            logger.debug("d12: dict key match found")
+            logger.debug("e12: dict key match found")
             added_on = blacklist_files_larger_than_original_dict[original_file_path]
             #DELETE THIS KEY FROM THE DICT \/ so it doesnt get bigger and bigger
            # logger.debug(blacklist_files_larger_than_original_dict)
@@ -371,12 +432,27 @@ def on_worker_process(data):
             logger.error("e14: error no key match found: this shouldnt happen?") 
 
         row = {            "filename" : file_name, 
-                      "original size" : original_file_size,
-                           "added_on" : added_on,
+                      "original_size" : original_file_size,
+                       "job_added_on" : added_on,
                      "transcoded_size": working_file_size,
                     "transcoded_time" : getDate(),
                                "path" : original_file_path          
                          }
+
+
+        sized_saved = working_file_size - original_file_size
+
+        row = {            "filename" : file_name, 
+                      "original_size" : convert_bytes(original_file_size),
+                       "job_added_on" : added_on,
+                     "transcoded_size": convert_bytes(working_file_size),
+                    "transcoded_time" : getDate(),
+                         "sized_saved": convert_bytes(sized_saved),          
+                               "path" : original_file_path          
+                         }
+
+
+                   
 
 
 
