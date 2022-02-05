@@ -326,7 +326,7 @@ def csvReadFunction(file_path,file_size):
 
         if  path == file_path:
             #logger.debug('existing path found = ' + path)
-            if size == str(file_size):
+            if convert_bytes(size) == str(file_size):
                 #logger.debug('matching size found = ' + size)
                 logger.debug('MATCH - FILE HAS BEEN BLACKLISTED ALREADY SKIP')
                 status = False
