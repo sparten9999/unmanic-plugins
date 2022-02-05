@@ -67,7 +67,7 @@
 #
 
 #            
-#
+#   check if file existed at the begining not during file test. (so existing tasks can work)
 #
 #
 
@@ -241,7 +241,9 @@ def on_library_management_file_test(data):
         logger.debug("test file detected")
         file_size =random.randint(1, 5)
     else:
-        file_size = os.path.getsize(file_path)
+
+
+        file_size = os.path.getsize(file_path)  # still need this once test thing is gone
     # Ensure the file's extension is lowercase
     file_extension = file_extension.lower()
 
@@ -326,7 +328,7 @@ def csvReadFunction(file_path,file_size):
 
         if  path == file_path:
             #logger.debug('existing path found = ' + path)
-            if convert_bytes(size) == str(file_size):
+            if size == convert_bytes(file_size):
                 #logger.debug('matching size found = ' + size)
                 logger.debug('MATCH - FILE HAS BEEN BLACKLISTED ALREADY SKIP')
                 status = False
